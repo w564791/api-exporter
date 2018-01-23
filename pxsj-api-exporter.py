@@ -5,15 +5,14 @@ author: how_bjl@live.cn
 file: prometheus-test
 time: 17-12-25 上午10:27
 """
-from prometheus_client import start_http_server,Gauge,Summary,CollectorRegistry
-from prometheus_client.core import GaugeMetricFamily
+from prometheus_client import start_http_server,Gauge,Summary
 import sys
 import time
 import yaml,json,requests
 import re
 ConnectTimeout = requests.exceptions.ConnectTimeout
 ScannerError=yaml.scanner.ScannerError
-registry = CollectorRegistry()
+# registry = CollectorRegistry()
 args_list = sys.argv[1:]
 print(args_list)
 def get_args(args_list):
@@ -154,13 +153,12 @@ def Result(data_list,cluster_env):
     return get_code
 
 
-
-
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 REQUEST2 = Gauge('cluster_current_time', 'kubernetes pods  current time', ['dates'])
-
+UP_STATUS = Gauge('upapi',"api status",['env','labels'])
 RESOULT = {}
 result = Result(data_list,cluster_env)
+
 for data in result:
     """初始化RESOULT字典，Gauge无法重复赋值"""
     for monitor_metrics in data["metrics"]:
@@ -171,7 +169,7 @@ for data in result:
         RESOULT[metrics] = {"Gauge": Gauge(metrics, annotations, ['env']), "data": data[monitor_metrics],"ENV": cluster_env}
 
 @REQUEST_TIME.time()
-def get_REQUEST(RESOULT,args,cluster_env):
+def get_REQUEST(RESOULT,args,cluster_env,STATUS):
     REQUEST2.labels(dates='date').set(time.time())
     """再次获取值并重新为RESOULT[metrics]["data"]赋值"""
     result = Result(data_list,cluster_env)
@@ -187,6 +185,8 @@ def get_REQUEST(RESOULT,args,cluster_env):
     print(RESOULT)
     for key,value in RESOULT.items():
         value["Gauge"].labels(env=value["ENV"]).set(value["data"])
+        STATUS.labels(value["ENV"],key).set(value["data"])
+        # STATUS.labels(labels=key).set(value["data"])
     time.sleep(args)
 
 if __name__ == '__main__':
@@ -195,5 +195,5 @@ if __name__ == '__main__':
 #     # Generate some requests.
     while True:
 
-        get_REQUEST(RESOULT,args,cluster_env)
+        get_REQUEST(RESOULT,args,cluster_env,UP_STATUS)
 
