@@ -4,7 +4,6 @@ projectCode: code
 env: swarm
 data: ""
 method: GET
-namespace: pxsj
 metrics:
  - http_code
  - program_code
@@ -22,7 +21,6 @@ projectCode: code
 env: swarm
 data: ""
 method: GET
-namespace: pxsj
 metrics:
  - http_code
  - program_code
@@ -44,7 +42,6 @@ metrics:
 data:
   payFrom: MOBILE
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -62,7 +59,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -80,7 +76,6 @@ metrics:
  - program_code
 data: ""
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -98,7 +93,6 @@ metrics:
  - program_code
 data: ""
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -116,7 +110,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -135,7 +128,6 @@ metrics:
 data:
   cityCode: 0280
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -154,7 +146,6 @@ metrics:
 data:
   cityCode: 0280
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -173,7 +164,6 @@ metrics:
 data:
   cityCode: 0280
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -192,7 +182,6 @@ metrics:
 data:
   categoryType: ALL
 method: POST
-namespace: pxsj
 header:
   Content-Type: "application/json"
   Accept: "application/json"
@@ -210,7 +199,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Accept: "application/json"
 url: "/noauth/v1/user/system/checkVersion"
@@ -229,7 +217,6 @@ data:
   buildingIds:
   - "f81b76a8-398b-4dff-8a31-84c36dd111d6"
 method: POST
-namespace: pxsj
 header:
   Accept: "application/json"
   Content-Type: "application/json"
@@ -247,7 +234,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Accept: "application/json"
   userId: "20395"
@@ -267,7 +253,6 @@ metrics:
  - program_code
 data: ""
 method: POST
-namespace: pxsj
 header:
   Accept: "application/json"
   Content-Type: "application/json"
@@ -285,7 +270,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Accept: "application/json"
   Content-Type: "application/json"
@@ -303,7 +287,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/user/comment/getGoodsCommentsCount?shopId=2092641263234303&goodsId=231"
@@ -320,7 +303,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/user/comment/getGoodsCommentsPage?shopId=2092641263234303&goodsId=231&cmtType=all&userId=123&page=1&pageSize=20"
@@ -337,7 +319,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/user/comment/getUserCommentedPage?userId=123&page=1&pageSize=20"
@@ -354,7 +335,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/user/comment/getOrderScore?shopId=2092641263234303&orderId=123"
@@ -371,7 +351,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/shop/comment/getShopCommentsPage?shopId=123&isReply=N&scoreLevel=2&orderId=123&page=1&pageSize=20"
@@ -388,7 +367,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/shop/comment/getShopCommentsCount?shopId=123&isReply=N&orderId=123"
@@ -405,7 +383,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/shop/comment/getShopWaitCommentsPage?shopId=123&page=1&pageSize=20"
@@ -422,7 +399,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/shop/comment/getShopScore?shopId=123"
@@ -439,7 +415,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/shop/comment/getShopCmtStatus?shopId=123"
@@ -456,7 +431,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/eboss/comment/getEbossCmtPage"
@@ -473,7 +447,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/eboss/comment/getEbossCmtDetail?shopId=123&cmtId=123"
@@ -490,7 +463,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/msgapi/querymsg"
@@ -507,7 +479,6 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/oauth/check/health"
@@ -524,10 +495,9 @@ metrics:
  - program_code
 data: ""
 method: GET
-namespace: pxsj
 header:
   Content-Type: "application/json"
 url: "/check/health"
-host: "go-cloudmsg"
+host: "go-oauth"
 port: "8511"
 protocol: "http"
