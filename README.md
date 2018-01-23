@@ -3,7 +3,6 @@
 program: 项目名称
 project: 工程名
 projectCode: 从resbonse中需要获取的字段（resbonse需要为json格式）
-env: swarm 环境 目前已经废弃，可以不要
 namespace: str   当跨namespace通信时需要
 data: ""   post时的data，可以留空
 method: GET   方法
