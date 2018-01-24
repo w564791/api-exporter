@@ -1,12 +1,13 @@
 program: msa
 project: "sms_service"
 projectCode: code
+env: swarm
 data: ""
 method: GET
 namespace: pxsj
 metrics:
- - http_code
- - program_code
+ http_code: 200
+ program_code: 20000000
 header:
   Content-Type: "application/json"
   Accept: "application/json"

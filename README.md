@@ -7,8 +7,8 @@ namespace: str   当跨namespace通信时需要
 data: ""   post时的data，可以留空
 method: GET   方法
 metrics:   监控项目，除http_code以为，其他都是从resbonse中获取
- - http_code
- - program_code
+ http_code: int   需要监控的metrics和正常值,
+ program_code: int
 header:  头信息
   Content-Type: "application/json"
   Accept: "application/json"
