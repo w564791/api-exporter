@@ -176,7 +176,7 @@ for data in result:
         annotations = "program of %s, and project of %s ,metrics %s" % (data["program"], data["project"], monitor_metrics)
         ENV = cluster_env
 
-        RESOULT[metrics] = {"Gauge": Gauge(metrics, annotations, ['env']), "resbonse_data": data[monitor_metrics],"ENV": cluster_env}
+        RESOULT[metrics] = {"resbonse_data": data[monitor_metrics],"ENV": cluster_env}
 
 @REQUEST_TIME.time()
 def get_REQUEST(RESOULT,args,cluster_env,STATUS):
@@ -198,13 +198,13 @@ def get_REQUEST(RESOULT,args,cluster_env,STATUS):
     print(RESOULT)
     for key,value in RESOULT.items():
         # print(key,value,"========>")
-        value["Gauge"].labels(env=value["ENV"]).set(value["resbonse_data"])
-        STATUS.labels(value["ENV"],key).set(value["resbonse_data"])
+        # value["Gauge"].labels(env=value["ENV"]).set(value["resbonse_data"])
+        # STATUS.labels(value["ENV"],key).set(value["resbonse_data"])
         print_yellow(value)
         if value["resbonse_data"] == value["default"]:
             STATUS.labels(value["ENV"],key).set(1)
         else:
-            STATUS.labels(value["ENV"], key).set(0)
+            STATUS.labels(value["ENV"], key).set(value["resbonse_data"])
         # STATUS.labels(labels=key).set(value["data"])
     time.sleep(args)
 
