@@ -14,7 +14,15 @@ ConnectTimeout = requests.exceptions.ConnectTimeout
 ScannerError=yaml.scanner.ScannerError
 # registry = CollectorRegistry()
 args_list = sys.argv[1:]
-print(args_list)
+
+def print_red(arg):
+    print("\033[0;31;10m%s\033[0m"%arg)
+def print_green(arg):
+    print("\033[0;32;10m%s\033[0m"%arg)
+def print_yellow(arg):
+    print("\033[0;33;10m%s\033[0m" %arg)
+
+
 def get_args(args_list):
     """获取脚本参数"""
     args = 30
@@ -22,7 +30,7 @@ def get_args(args_list):
     config_file = '/tmp/config.yml'
     for Arg in args_list:
         Arg=re.split("[=]",Arg)
-        print(Arg)
+        # print(Arg)
         if "-i" in Arg:
             try:
                 args = int(Arg[1])
@@ -59,13 +67,15 @@ def get_args(args_list):
 
     return args,cluster_env,config_file
 
+
 args,cluster_env,config_file = get_args(args_list)
-print("config","---->",config_file)
-print("cluster_env","---->",cluster_env)
+print_green("args list ----> %s"%args_list)
+print_green("config file ----> %s"%config_file)
+print_green("cluster env ----> %s"%cluster_env)
 
 def http_ok(url,result,data,resbonse,projectCode):
     """当获取resbonse成功时，为result赋值"""
-    print("%s get OK! %s" % (url,resbonse.status_code))
+    print("%s get [\033[0;32;10mOK\033[0m]! %s" % (url,resbonse.status_code))
     for i in data['metrics']:
         if i == "http_code":
             result[i] = resbonse.status_code
@@ -74,7 +84,7 @@ def http_ok(url,result,data,resbonse,projectCode):
     return result
 def http_timeout(url,result,data):
     """当获取resbonse超时时，为result赋值为0"""
-    print("%s get Error! " % url)
+    print("%s get [\033[0;31;10mError\033[0m]! " % url)
     for i in data['metrics']:
         if i == "http_code":
             result[i] = -1
@@ -91,21 +101,21 @@ def Scan_conf(config_file):
         try:
             data.append(next(ff))
         except ScannerError    as scanner_error:
-            print(scanner_error.problem_mark)
+            print_red(scanner_error.problem_mark)
             break
         except StopIteration as stop_err:
             # print(stop_err.value)
             break
     '''格式化yaml中的metrics为字典（原为list）'''
-    for metrics in data:
-        try:
-            print(metrics['project'],metrics['metrics'])
-            metrics_data = {}
-            for  metrics_format in metrics['metrics']:
-                metrics_data[metrics_format] = metrics_format
-            metrics['metrics'] = metrics_data
-        except TypeError:
-            pass
+    # for metrics in data:
+    #     try:
+    #         print(metrics['project'],metrics['metrics'])
+    #         metrics_data = {}
+    #         for  metrics_format in metrics['metrics']:
+    #             metrics_data[metrics_format] = metrics_format
+    #         metrics['metrics'] = metrics_data
+    #     except TypeError:
+    #         pass
 
     return data
 data_list = Scan_conf(config_file)
@@ -166,7 +176,7 @@ for data in result:
         annotations = "program of %s, and project of %s ,metrics %s" % (data["program"], data["project"], monitor_metrics)
         ENV = cluster_env
 
-        RESOULT[metrics] = {"Gauge": Gauge(metrics, annotations, ['env']), "data": data[monitor_metrics],"ENV": cluster_env}
+        RESOULT[metrics] = {"Gauge": Gauge(metrics, annotations, ['env']), "resbonse_data": data[monitor_metrics],"ENV": cluster_env}
 
 @REQUEST_TIME.time()
 def get_REQUEST(RESOULT,args,cluster_env,STATUS):
@@ -175,24 +185,35 @@ def get_REQUEST(RESOULT,args,cluster_env,STATUS):
     result = Result(data_list,cluster_env)
 
     for data in result:
-        print(data)
+        # print(data,"----->")
         for monitor_metrics in data["metrics"]:
             metrics = "%s_%s_%s" % (data["program"], data["project"], monitor_metrics)
+            RESOULT[metrics]["metrics"] = monitor_metrics
+            RESOULT[metrics]["resbonse_data"] = data[monitor_metrics]
+            RESOULT[metrics]["default"] = data['metrics'][monitor_metrics]
 
-            RESOULT[metrics]["data"] = data[monitor_metrics]
+            # RESOULT
     # print(result,244)
     """重新为Gauge赋值"""
     print(RESOULT)
     for key,value in RESOULT.items():
-        value["Gauge"].labels(env=value["ENV"]).set(value["data"])
-        STATUS.labels(value["ENV"],key).set(value["data"])
+        # print(key,value,"========>")
+        value["Gauge"].labels(env=value["ENV"]).set(value["resbonse_data"])
+        STATUS.labels(value["ENV"],key).set(value["resbonse_data"])
+        print_yellow(value)
+        if value["resbonse_data"] == value["default"]:
+            STATUS.labels(value["ENV"],key).set(1)
+        else:
+            STATUS.labels(value["ENV"], key).set(0)
         # STATUS.labels(labels=key).set(value["data"])
     time.sleep(args)
 
 if __name__ == '__main__':
+
 #     # Start up the server to expose the metrics.
     start_http_server(8000)
 #     # Generate some requests.
+    print("start server at port [\033[0;32;10m8000\033[0m]")
     while True:
 
         get_REQUEST(RESOULT,args,cluster_env,UP_STATUS)
