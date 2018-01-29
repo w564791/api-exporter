@@ -11,7 +11,10 @@ import time,datetime
 import yaml,json,requests
 import re
 ConnectTimeout = requests.exceptions.ConnectTimeout
+ReadTimeout = requests.exceptions.ReadTimeout
+ConnectionError = requests.exceptions.ConnectionError
 ScannerError=yaml.scanner.ScannerError
+
 # registry = CollectorRegistry()
 args_list = sys.argv[1:]
 
@@ -76,11 +79,34 @@ print_green("%s cluster env ----> %s"%(datetime.datetime.now(),cluster_env))
 def http_ok(url,result,data,resbonse,projectCode):
     """当获取resbonse成功时，为result赋值"""
     print("%s: %s get [\033[0;32;10mOK\033[0m]! %s" % (datetime.datetime.now(),url,resbonse.status_code))
+    try:
+        response = json.loads(resbonse.text)
+    except json.decoder.JSONDecodeError:
+        if resbonse.headers['Content-Type'] == 'image/png':
+            response = "1"
+        else:
+            response = resbonse.text
+
+
+    # match_code = re.match(projectCode,resbonse)
+    # print(type(match_code),"------------------------>")
     for i in data['metrics']:
         if i == "http_code":
             result[i] = resbonse.status_code
         elif i == "program_code":
-            result[i] = resbonse.json()[projectCode]
+            if isinstance(response,dict):
+                result[i] = response[projectCode]
+
+            elif isinstance(response,str):
+                if re.match(projectCode,response):
+                    result[i] = 1
+                else:
+                    result[i] = -1
+                # break
+            # elif not match_code:
+            #     result[i] = 1
+            # elif match_code:
+            #     result[i] = -1
     return result
 def http_timeout(url,result,data):
     """当获取resbonse超时时，为result赋值为0"""
@@ -104,6 +130,7 @@ def Scan_conf(config_file):
             print_red("%s: %s"%(datetime.datetime.now(),scanner_error.problem_mark))
             break
         except StopIteration as stop_err:
+
             # print(stop_err.value)
             break
 
@@ -114,9 +141,18 @@ def re_data(method,uri,result, datas,*args,**kwargs):
         resbonse = requests.request(method,**kwargs)
 
         http_ok(uri,result, datas,resbonse,*args)
-    except:
+
+    except ConnectTimeout:
+
         http_timeout(uri,result, datas)
         resbonse = None
+    except   ConnectionError:
+        http_timeout(uri, result, datas)
+        resbonse = None
+    except ReadTimeout:
+        http_timeout(uri, result, datas)
+        resbonse = None
+
 
     return resbonse
 
@@ -132,88 +168,87 @@ def get_key(data,key,type=False):
         except:
             get_data = False
     return get_data
+
 def Result(data_list,cluster_env):
     """获取url的返回值"""
     get_code = []
-    for data in data_list:
-        auth = get_key(data,'authData',type=tuple)
-        internet = get_key(data,'internet')
 
-        if data:
-            try:
-                if cluster_env == "k8s":
-                    if internet:
-                        url = "%s://%s:%s%s" % (data["protocol"],
-                                                data["host"],
+    for data in data_list:
+        for host in data['host']:
+
+            auth = get_key(data,'authData',type=tuple)
+            internet = get_key(data,'internet')
+
+            if data:
+                try:
+                    """判断环境，读URL进行叠加"""
+                    if cluster_env == "k8s":
+                        if internet:
+                            url = "%s://%s:%s%s" % (data["protocol"],
+                                                    host,
+                                                    data["port"],
+                                                    data["url"])
+                        else:
+                            url = "%s://%s.%s:%s%s" % (data["protocol"],
+                                                       host,
+                                                       data['namespace'],
+                                                       data["port"],
+                                                       data["url"])
+                    elif cluster_env == "swarm":
+                        if internet:
+                            url = "%s://%s:%s%s" % (data["protocol"],
+                                                    host,
+                                                    data["port"],
+                                                    data["url"])
+                        else:
+                            url = "%s://%s:%s%s" % (data["protocol"],
+                                                    host,
                                                 data["port"],
                                                 data["url"])
+                    elif cluster_env == "local":
+                        if internet:
+                            url = "%s://%s:%s%s" % (data["protocol"],
+                                                    host,
+                                                    data["port"],
+                                                    data["url"])
+                        else:
+                            url = "%s://192.168.31.233:%s%s" % (data["protocol"],
+                                                            data["port"],
+                                                            data["url"])
                     else:
-                        url = "%s://%s.%s:%s%s" % (data["protocol"],
-                                                   data["host"],
-                                                   data['namespace'],
-                                                   data["port"],
-                                                   data["url"])
-                elif cluster_env == "swarm":
-                    url = "%s://%s:%s%s" % (data["protocol"],
-                                            data["host"],
-                                            data["port"],
-                                            data["url"])
-                elif cluster_env == "local":
-                    url = "%s://192.168.31.233:%s%s" % (data["protocol"],
-                                                        data["port"],
-                                                        data["url"])
+                        print("""
+                                -e=[swarm|k8s|local] 设置cluster环境，当前支持k8s或者swarm,local，默认swarm
+                            
+                              """)
+                        exit(7)
+                    metadata = data['data']
+                    method = data['method'].lower()
+                    header = data['header']
+                    projectCode = data['projectCode']
+                    result = {}
+                    result['program'] = data['program']
+                    result['env'] = cluster_env
+                    result['project'] = data['project']
+                    result['metrics'] = data['metrics']
+                    result['hosts'] = host
+                    # auth = data['auth']
+                    # print(data)
+                except KeyError as e:
+                    print_red("Key Error, Lost config: [ \"%s\" ]"%e.args)
+                    exit(5)
 
-                metadata = data['data']
-                method = data['method'].lower()
-                header = data['header']
-                projectCode = data['projectCode']
-                result = {}
-                result['program'] = data['program']
-                result['env'] = cluster_env
-                result['project'] = data['project']
-                result['metrics'] = data['metrics']
-                # auth = data['auth']
+                re_data(method,url,result,data,
+                        projectCode,url=url,
+                        data=json.dumps(metadata),
+                        headers=header,
+                        timeout=2,
+                        auth=auth
+                        )
 
-            except KeyError as e:
-                print_red("Key Error, Lost config: [ \"%s\" ]"%e.args)
-                exit(5)
 
-            '''
-            尝试获取resbonse
-            
-            if method == 'POST':
-                
-                try:
-                    resbonse = requests.post(url=url, data=json.dumps(metadata), headers=header,timeout=2)
-                    http_ok(url,result,data, resbonse, projectCode)
-                except  :
 
-                    http_timeout(url,result, data)
-                '''
-            re_data(method,url,result,data,
-                    projectCode,url=url,
-                    data=json.dumps(metadata),
-                    headers=header,
-                    timeout=2,
-                    auth=auth
-                    )
+                get_code.append(result)
 
-                    # continue
-            '''
-            # elif method == "GET":
-                
-                if auth:
-                    pass
-                try:
-                    resbonse = requests.get(url=url,headers=header,timeout=2)
-                    http_ok(url,result,data, resbonse, projectCode)
-                except :
-                    http_timeout(url,result, data)
-                
-                # re_data(requests.get,url,result, data, projectCode,url=url,data=json.dumps(metadata),headers=header,timeout=3,auth=auth)
-                    # continue
-                    '''
-            get_code.append(result)
     return get_code
 
 
@@ -226,11 +261,13 @@ result = Result(data_list,cluster_env)
 for data in result:
     """初始化RESOULT字典，Gauge无法重复赋值"""
     for monitor_metrics in data["metrics"]:
-        metrics = "%s_%s_%s" % (data["program"], data["project"], monitor_metrics)
+        host = re.sub("[\.-]","_",data['hosts'])
+        metrics = "%s_%s_%s__%s" % (data["program"], data["project"], monitor_metrics,host)
         annotations = "program of %s, and project of %s ,metrics %s" % (data["program"], data["project"], monitor_metrics)
         ENV = cluster_env
 
         RESOULT[metrics] = {"resbonse_data": data[monitor_metrics],"ENV": cluster_env}
+
 
 @REQUEST_TIME.time()
 def get_REQUEST(RESOULT,args,cluster_env,STATUS):
@@ -241,7 +278,9 @@ def get_REQUEST(RESOULT,args,cluster_env,STATUS):
     for data in result:
         # print(data,"----->")
         for monitor_metrics in data["metrics"]:
-            metrics = "%s_%s_%s" % (data["program"], data["project"], monitor_metrics)
+            host = re.sub("[.-]","_",data['hosts'])
+            metrics = "%s_%s_%s__%s" % (data["program"], data["project"], monitor_metrics,host)
+
             RESOULT[metrics]["metrics"] = monitor_metrics
             RESOULT[metrics]["resbonse_data"] = data[monitor_metrics]
             RESOULT[metrics]["default"] = data['metrics'][monitor_metrics]
@@ -254,7 +293,7 @@ def get_REQUEST(RESOULT,args,cluster_env,STATUS):
         # print(key,value,"========>")
         # value["Gauge"].labels(env=value["ENV"]).set(value["resbonse_data"])
         # STATUS.labels(value["ENV"],key).set(value["resbonse_data"])
-        print_yellow("%s: %-40s %s"%(datetime.datetime.now(),key,value))
+        print_yellow("%s: %-50s %s"%(datetime.datetime.now(),key,value))
         if value["resbonse_data"] == value["default"]:
             STATUS.labels(value["ENV"],key).set(1)
         else:

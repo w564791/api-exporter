@@ -1,17 +1,30 @@
-program: msa
-project: "sms_service"
-projectCode: code
-env: swarm
+internet: True
+program: flannel
+project: "k8s"
+projectCode: "flanneld is running"
+metrics:
+ http_code: 200
+ program_code: "flanneld is running"
+auth: False
+authData:
+  - hello
+  - 895712
 data: ""
 method: GET
 namespace: pxsj
-metrics:
- http_code: 200
- program_code: 20000000
 header:
   Content-Type: "application/json"
-  Accept: "application/json"
-url: "/v1/sms/template.get"
-host: "sms-service"
-port: "8301"
+url: "/healthz"
+host:
+ - "10.10.5.85"
+ - "10.10.6.90"
+ - "10.10.4.159"
+ - "10.10.4.151"
+ - "10.10.4.50"
+ - "10.10.7.229"
+ - "10.10.7.38"
+ - "10.10.6.201"
+ - "10.10.4.12"
+ - "10.10.5.105"
+port: "10752"
 protocol: "http"
