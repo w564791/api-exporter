@@ -45,7 +45,7 @@ protocol: "http"  “通信协议”
 ...
 }
 ```
-返回值为json，需要监控的为code字段，正常值为0,http code正常值为200
+#### 返回值为json，需要监控的为code字段，正常值为0,http code正常值为200
 ```angular2html
 internet: True 
 program: program  
@@ -70,7 +70,7 @@ host:
 port: "80" 
 protocol: "http"  
 ```
-###如监控返回值非json格式，为str时配置时，例如返回值为pong
+#### 如监控返回值非json格式，为str时配置时，例如返回值为pong
 ```angular2html
 internet: True 
 program: program  
