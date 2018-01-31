@@ -6,7 +6,7 @@ file: prometheus-test
 time: 17-12-25 上午10:27
 """
 from prometheus_client import start_http_server,Gauge,Summary
-import sys
+import sys,os
 import time,datetime
 import yaml,json,requests
 import re
@@ -52,7 +52,17 @@ def get_args(args_list):
                 exit(3)
         elif "-f" in Arg:
             try:
-                config_file = Arg[1]
+                if Arg[1].startswith("http"):
+                    get_url = requests.get(Arg[1])
+                    file_name = os.path.basename(Arg[1])
+                    file = "/tmp/%s"%file_name
+                    file_tmp = open(file,'wb')
+                    for chunk in get_url.iter_content(chunk_size=512):
+                        if chunk:
+                            file_tmp.write(chunk)
+                    config_file = file
+                else:
+                    config_file = Arg[1]
             except IndexError as e:
                 config_file = 'config.yml'
                 print(datetime.datetime.now(),e.args)
@@ -72,6 +82,7 @@ def get_args(args_list):
 
 
 args,cluster_env,config_file = get_args(args_list)
+
 print_green("%s: args list ----> %s"%(datetime.datetime.now(),args_list))
 print_green("%s: config file ----> %s"%(datetime.datetime.now(),config_file))
 print_green("%s cluster env ----> %s"%(datetime.datetime.now(),cluster_env))
@@ -142,16 +153,16 @@ def re_data(method,uri,result, datas,*args,**kwargs):
 
         http_ok(uri,result, datas,resbonse,*args)
 
-    except ConnectTimeout:
-
+    # except ConnectTimeout or ConnectionError or ReadTimeout:
+    except:
         http_timeout(uri,result, datas)
         resbonse = None
-    except   ConnectionError:
-        http_timeout(uri, result, datas)
-        resbonse = None
-    except ReadTimeout:
-        http_timeout(uri, result, datas)
-        resbonse = None
+    # except   ConnectionError:
+    #     http_timeout(uri, result, datas)
+    #     resbonse = None
+    # except ReadTimeout:
+    #     http_timeout(uri, result, datas)
+    #     resbonse = None
 
 
     return resbonse
@@ -290,7 +301,7 @@ def get_REQUEST(RESOULT,args,cluster_env,STATUS):
     """重新为Gauge赋值"""
     print(datetime.datetime.now(),RESOULT)
     for key,value in RESOULT.items():
-        # print(key,value,"========>")
+
         # value["Gauge"].labels(env=value["ENV"]).set(value["resbonse_data"])
         # STATUS.labels(value["ENV"],key).set(value["resbonse_data"])
         print_yellow("%s: %-50s %s"%(datetime.datetime.now(),key,value))
