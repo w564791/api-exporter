@@ -1,3 +1,11 @@
+## args: 
+```angular2html
+                -i=int 设置监控时间间隔,默认30s
+                -e=[swarm|k8s] 设置cluster环境，当前支持k8s或者swarm，默认swarm
+                -f=path 指定配置文件,默认为./config.yml,can be a network file,must start with "http".
+                --help or -h 查看帮助
+
+```
 
 ```
 internet: True   是否为internet项目（True时不会在host后添加命名空间）
