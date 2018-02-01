@@ -64,7 +64,7 @@ def get_args(args_list):
                 else:
                     config_file = Arg[1]
             except IndexError as e:
-                config_file = 'config.yml'
+                config_file = '/tmp/config.yml'
                 print(datetime.datetime.now(),e.args)
                 exit(4)
         elif "help" or "-h" in Arg:
@@ -72,7 +72,7 @@ def get_args(args_list):
                 """
                 -i=int 设置监控时间间隔,默认30s
                 -e=[swarm|k8s] 设置cluster环境，当前支持k8s或者swarm，默认swarm
-                -f=path 指定配置文件,默认为./config.yml
+                -f=path 指定配置文件,默认为/tmp/config.yml
                 --help or -h 查看帮助
                 """
             )
@@ -104,6 +104,7 @@ def http_ok(url,result,data,resbonse,projectCode):
     for i in data['metrics']:
         if i == "http_code":
             result[i] = resbonse.status_code
+
         elif i == "program_code":
             if isinstance(response,dict):
                 result[i] = response[projectCode]
@@ -113,11 +114,13 @@ def http_ok(url,result,data,resbonse,projectCode):
                     result[i] = 1
                 else:
                     result[i] = -1
-                # break
-            # elif not match_code:
-            #     result[i] = 1
-            # elif match_code:
-            #     result[i] = -1
+        elif i == 'response_time':
+            time_result = "%s" % resbonse.elapsed
+            f_time = float(time_result.split(":")[2]) * 1000
+            response_time = '%.0f' % (f_time)
+            result[i] = response_time
+
+
     return result
 def http_timeout(url,result,data):
     """当获取resbonse超时时，为result赋值为0"""
@@ -126,6 +129,8 @@ def http_timeout(url,result,data):
         if i == "http_code":
             result[i] = -1
         elif i == "program_code":
+            result[i] = -1
+        elif i == "response_time":
             result[i] = -1
     return result
 
@@ -266,6 +271,7 @@ def Result(data_list,cluster_env):
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 REQUEST2 = Gauge('cluster_current_time', 'kubernetes pods  current time', ['dates'])
 UP_STATUS = Gauge('upapi',"api status",['env','labels'])
+RESPONSE = Gauge('response_time','api response time',['env','labels'])
 RESOULT = {}
 result = Result(data_list,cluster_env)
 
@@ -281,7 +287,7 @@ for data in result:
 
 
 @REQUEST_TIME.time()
-def get_REQUEST(RESOULT,args,cluster_env,STATUS):
+def get_REQUEST(RESOULT,args,cluster_env,STATUS,RESPONSE):
     REQUEST2.labels(dates='date').set(time.time())
     """再次获取值并重新为RESOULT[metrics]["data"]赋值"""
     result = Result(data_list,cluster_env)
@@ -296,19 +302,22 @@ def get_REQUEST(RESOULT,args,cluster_env,STATUS):
             RESOULT[metrics]["resbonse_data"] = data[monitor_metrics]
             RESOULT[metrics]["default"] = data['metrics'][monitor_metrics]
 
+
             # RESOULT
     # print(result,244)
     """重新为Gauge赋值"""
     print(datetime.datetime.now(),RESOULT)
     for key,value in RESOULT.items():
 
-        # value["Gauge"].labels(env=value["ENV"]).set(value["resbonse_data"])
-        # STATUS.labels(value["ENV"],key).set(value["resbonse_data"])
+
         print_yellow("%s: %-50s %s"%(datetime.datetime.now(),key,value))
-        if value["resbonse_data"] == value["default"]:
-            STATUS.labels(value["ENV"],key).set(1)
+        if "response_time" in key:
+            RESPONSE.labels(value["ENV"], key).set(value["resbonse_data"])
         else:
-            STATUS.labels(value["ENV"], key).set(value["resbonse_data"])
+            if value["resbonse_data"] == value["default"]:
+                STATUS.labels(value["ENV"],key).set(1)
+            else:
+                STATUS.labels(value["ENV"], key).set(value["resbonse_data"])
         # STATUS.labels(labels=key).set(value["data"])
     time.sleep(args)
 
@@ -320,5 +329,5 @@ if __name__ == '__main__':
     print("%s: start server at port [\033[0;32;10m8000\033[0m]"%datetime.datetime.now())
     while True:
 
-        get_REQUEST(RESOULT,args,cluster_env,UP_STATUS)
+        get_REQUEST(RESOULT,args,cluster_env,UP_STATUS,RESPONSE)
 
